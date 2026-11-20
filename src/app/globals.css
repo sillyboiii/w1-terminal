@@ -1,0 +1,184 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fbf6ec;
+  --foreground: #151515;
+  --muted: #6b6b6b;
+  --border: #e8dfd2;
+  --ink: #0f0f0f;
+  --paper: #fbf6ec;
+  --up: #1d6b4f;
+  --down: #9b3535;
+  color-scheme: only light;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-up: var(--up);
+  --color-down: var(--down);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.num {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  letter-spacing: -0.035em;
+}
+
+.label {
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.serif {
+  font-family: var(--font-serif), Georgia, serif;
+}
+
+.pane-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.pane-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.pane-scroll::-webkit-scrollbar-thumb {
+  background: var(--border);
+}
+.pane-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.terminal-grid {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: minmax(220px, 1fr);
+}
+@media (min-width: 768px) {
+  .terminal-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-rows: repeat(var(--rows, 2), minmax(0, 1fr));
+    grid-auto-rows: minmax(0, 1fr);
+  }
+  .terminal-grid > [data-pane] {
+    grid-column: var(--col, 1 / -1);
+    grid-row: var(--row, 1 / -1);
+  }
+}
+
+.grid-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(15, 15, 15, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 15, 15, 0.035) 1px, transparent 1px);
+  background-size: 48px 48px;
+  animation: grid-drift 60s linear infinite;
+}
+
+.scanline {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 3px,
+    rgba(15, 15, 15, 0.028) 3px,
+    rgba(15, 15, 15, 0.028) 4px
+  );
+}
+.scanline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 22vh;
+  background: linear-gradient(to bottom, transparent, rgba(15, 15, 15, 0.025), transparent);
+  animation: scan-sweep 14s linear infinite;
+}
+
+.cursor-blink {
+  animation: cursor-blink 1.05s steps(1) infinite;
+}
+
+.pulse-dot {
+  animation: pulse-dot 2.2s ease-in-out infinite;
+}
+
+.ticker-scroll {
+  animation: ticker-scroll 100s linear infinite;
+}
+.ticker-scroll:hover {
+  animation-play-state: paused;
+}
+
+.wire-enter {
+  animation: wire-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes grid-drift {
+  from { background-position: 0 0; }
+  to { background-position: 48px 48px; }
+}
+@keyframes scan-sweep {
+  from { transform: translateY(-30vh); }
+  to { transform: translateY(130vh); }
+}
+@keyframes cursor-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.8); }
+}
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes wire-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grid-backdrop,
+  .scanline::after,
+  .cursor-blink,
+  .pulse-dot,
+  .ticker-scroll,
+  .wire-enter {
+    animation: none !important;
+  }
+}
