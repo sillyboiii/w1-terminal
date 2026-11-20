@@ -68,10 +68,10 @@ export function HoldingsPane() {
         <span className="num text-[9px] text-muted">{positions.length} positions</span>
       </div>
       <div className="pane-scroll min-h-0 flex-1 overflow-auto">
-        <table className="w-full min-w-[520px] border-collapse">
+        <table className="w-full min-w-[600px] border-collapse">
           <thead className="sticky top-0 bg-background">
             <tr className="border-y border-border">
-              {["Ticker", "Shares", "Last", "Day", "Weight", "Unreal."].map((header) => (
+              {["Ticker", "Shares", "Entry", "Last", "Day", "Weight", "Unreal."].map((header) => (
                 <th key={header} className="label px-2 py-1.5 text-right font-normal first:text-left last:pr-3">
                   {header}
                 </th>
@@ -93,6 +93,7 @@ export function HoldingsPane() {
                     )}
                   </td>
                   <td className="num px-2 py-1.5 text-right text-[10px] text-foreground">{position.shares.toLocaleString()}</td>
+                  <td className="num px-2 py-1.5 text-right text-[10px] text-muted">{formatPrice(position.costBasis)}</td>
                   <td className="px-2 py-1.5 text-right">
                     <AnimatedNumber value={position.price} format={(v) => formatPrice(v)} className="justify-end text-[10px] text-ink" />
                   </td>

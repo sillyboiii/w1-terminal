@@ -1,13 +1,16 @@
 import { XMLParser } from "fast-xml-parser";
+import { fetchPortfolio } from "./sanity";
 import type { NewsItem } from "./types";
 
 const UA = "Mozilla/5.0";
 const CACHE_TTL = 45_000;
 const QUORUM = 4;
-const QUORUM_MS = 2_500;
+const QUORUM_MS = 3_000;
 const FEED_TIMEOUT_MS = 8_000;
+const POSITION_TTL = 300_000;
 const cache = new Map<string, { value: NewsItem[]; at: number }>();
 const pending = new Map<string, Promise<NewsItem[]>>();
+let positionCache: { tickers: string[]; at: number } | null = null;
 
 const STATIC_FEEDS = [
   { url: "https://www.cnbc.com/id/100003114/device/rss/rss.html", publisher: "CNBC" },
@@ -18,6 +21,16 @@ const STATIC_FEEDS = [
     publisher: "PR Newswire",
   },
 ];
+
+async function liveTickers(): Promise<string[]> {
+  if (positionCache && Date.now() - positionCache.at < POSITION_TTL) {
+    return positionCache.tickers;
+  }
+  const portfolio = await fetchPortfolio().catch(() => null);
+  const tickers = (portfolio?.positions ?? []).slice(0, 5).map((position) => position.ticker);
+  positionCache = { tickers, at: Date.now() };
+  return tickers;
+}
 
 interface YahooNews {
   title: string;
@@ -45,7 +58,12 @@ function cleanTitle(value: string): string {
     .trim();
 }
 
-function parseRss(xml: string, fallbackPublisher: string, limit: number): NewsItem[] {
+function parseRss(
+  xml: string,
+  fallbackPublisher: string,
+  limit: number,
+  tickers: string[] = [],
+): NewsItem[] {
   try {
     const parsed = new XMLParser({ ignoreAttributes: false }).parse(xml);
     const raw = parsed?.rss?.channel?.item;
@@ -62,7 +80,7 @@ function parseRss(xml: string, fallbackPublisher: string, limit: number): NewsIt
           publisher,
           url,
           publishedAt: Date.parse(text(item.pubDate)) || Date.now(),
-          tickers: [],
+          tickers,
           thumbnail: null,
         };
       })
@@ -92,7 +110,7 @@ async function fetchFeed(
   }
 }
 
-async function fromYahoo(query: string): Promise<NewsItem[] | null> {
+async function fromYahoo(query: string, fallbackTicker?: string): Promise<NewsItem[] | null> {
   const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&newsCount=14&quotesCount=0`;
   try {
     const controller = new AbortController();
@@ -113,7 +131,11 @@ async function fromYahoo(query: string): Promise<NewsItem[] | null> {
       publisher: item.publisher,
       url: item.link,
       publishedAt: item.providerPublishTime * 1000,
-      tickers: item.relatedTickers ?? [],
+      tickers: item.relatedTickers?.length
+        ? item.relatedTickers
+        : fallbackTicker
+          ? [fallbackTicker]
+          : [],
       thumbnail: item.thumbnail?.resolutions?.[0]?.url ?? null,
     }));
   } catch {
@@ -125,10 +147,10 @@ async function fromRss(
   url: string,
   publisher: string,
   limit: number,
-  headers: Record<string, string> = { Accept: "application/rss+xml,text/xml,*/*" },
+  tickers: string[] = [],
 ): Promise<NewsItem[]> {
-  const xml = await fetchFeed(url, headers);
-  return xml ? parseRss(xml, publisher, limit) : [];
+  const xml = await fetchFeed(url, { Accept: "application/rss+xml,text/xml,*/*" });
+  return xml ? parseRss(xml, publisher, limit, tickers) : [];
 }
 
 function relevant(item: NewsItem, query: string): boolean {
@@ -145,24 +167,34 @@ function relevant(item: NewsItem, query: string): boolean {
   return tokens.some((token) => haystack.includes(token));
 }
 
-function dedupe(items: NewsItem[]): NewsItem[] {
+function unique(items: NewsItem[]): NewsItem[] {
   const seen = new Set<string>();
-  return items
-    .filter((item) => {
-      const key = item.title.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 120) || item.url;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    })
+  return items.filter((item) => {
+    const key = item.title.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 120) || item.url;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function latest(items: NewsItem[], limit: number): NewsItem[] {
+  return unique(items)
     .sort((a, b) => b.publishedAt - a.publishedAt)
-    .slice(0, 21);
+    .slice(0, limit);
 }
 
 async function collect(query: string): Promise<NewsItem[]> {
   const q = query.trim() || "markets";
   const googleUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(`${q} when:7d`)}&hl=en-GB&gl=GB&ceid=GB:en`;
   const bingUrl = `https://www.bing.com/news/search?q=${encodeURIComponent(q)}&format=RSS`;
-  const tasks: { promise: Promise<NewsItem[] | null>; querySpecific: boolean }[] = [
+  const positions = (await liveTickers()).filter(
+    (ticker) => ticker.toUpperCase() !== q.toUpperCase(),
+  );
+  const tasks: {
+    promise: Promise<NewsItem[] | null>;
+    querySpecific: boolean;
+    position?: boolean;
+  }[] = [
     { promise: fromYahoo(q), querySpecific: true },
     { promise: fromRss(googleUrl, "Google News", 14), querySpecific: true },
     { promise: fromRss(bingUrl, "Bing News", 10), querySpecific: true },
@@ -170,9 +202,22 @@ async function collect(query: string): Promise<NewsItem[]> {
       promise: fromRss(feed.url, feed.publisher, 12),
       querySpecific: false,
     })),
+    ...positions.flatMap((ticker) => {
+      const tickerGoogleUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(`${ticker} when:7d`)}&hl=en-GB&gl=GB&ceid=GB:en`;
+      return [
+        { promise: fromYahoo(ticker, ticker), querySpecific: true, position: true },
+        {
+          promise: fromRss(tickerGoogleUrl, "Google News", 6, [ticker]),
+          querySpecific: true,
+          position: true,
+        },
+      ];
+    }),
   ];
   const batches: NewsItem[][] = [];
+  const priorityBatches: NewsItem[][] = [];
   let queryBatches = 0;
+  let positionBatches = 0;
   let finished = 0;
   let done = () => {};
   const complete = new Promise<void>((resolve) => {
@@ -186,12 +231,17 @@ async function collect(query: string): Promise<NewsItem[]> {
           const filtered = items.filter((item) => relevant(item, q));
           if (filtered.length) {
             batches.push(filtered);
+            if (task.position) {
+              priorityBatches.push(filtered);
+              positionBatches += 1;
+            }
             if (task.querySpecific) queryBatches += 1;
           }
         }
         finished += 1;
+        const positionsReady = positions.length === 0 || positionBatches >= positions.length;
         if (
-          (batches.length >= QUORUM && queryBatches > 0) ||
+          (batches.length >= QUORUM && queryBatches > 0 && positionsReady) ||
           finished === tasks.length
         ) {
           done();
@@ -206,7 +256,16 @@ async function collect(query: string): Promise<NewsItem[]> {
   const timer = setTimeout(done, QUORUM_MS);
   await complete;
   clearTimeout(timer);
-  return dedupe(batches.flat());
+  const priority = latest(
+    priorityBatches.flatMap((batch) => latest(batch, 2)),
+    8,
+  );
+  const priorityIds = new Set(priority.map((item) => item.id));
+  const rest = latest(
+    batches.flat().filter((item) => !priorityIds.has(item.id)),
+    24 - priority.length,
+  );
+  return [...priority, ...rest].sort((a, b) => b.publishedAt - a.publishedAt);
 }
 
 function refresh(q: string): Promise<NewsItem[]> {

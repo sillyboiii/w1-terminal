@@ -2,10 +2,15 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import type { IChartApi, ISeriesApi, UTCTimestamp } from "lightweight-charts";
+import type {
+  IChartApi,
+  IPriceLine,
+  ISeriesApi,
+  UTCTimestamp,
+} from "lightweight-charts";
 import { AnimatedNumber } from "../AnimatedNumber";
 import { formatPct, formatPrice } from "@/lib/format";
-import type { Candle, ChartData } from "@/lib/types";
+import type { Candle, ChartData, PortfolioData } from "@/lib/types";
 
 const RANGES = ["1d", "5d", "1mo", "3mo", "1y", "5y", "max"];
 const RANGE_LABELS: Record<string, string> = {
@@ -30,6 +35,7 @@ export function ChartPane({ symbol }: Props) {
   });
   const [hover, setHover] = useState<Candle | null>(null);
   const [ready, setReady] = useState(false);
+  const [entry, setEntry] = useState<number | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const data = chartState.data;
   const loading = chartState.loading;
@@ -40,6 +46,8 @@ export function ChartPane({ symbol }: Props) {
   const candleRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const volumeRef = useRef<ISeriesApi<"Histogram"> | null>(null);
   const candleMapRef = useRef<Map<number, Candle>>(new Map());
+  const entryLineRef = useRef<IPriceLine | null>(null);
+  const lineStyleRef = useRef<typeof import("lightweight-charts").LineStyle | null>(null);
 
   useEffect(() => {
     let disposed = false;
@@ -50,6 +58,7 @@ export function ChartPane({ symbol }: Props) {
       const { createChart, ColorType, CrosshairMode, LineStyle } = await import("lightweight-charts");
       const element = containerRef.current;
       if (disposed || !element) return;
+      lineStyleRef.current = LineStyle;
 
       chart = createChart(element, {
         width: element.clientWidth,
@@ -118,6 +127,8 @@ export function ChartPane({ symbol }: Props) {
       chartRef.current = null;
       candleRef.current = null;
       volumeRef.current = null;
+      entryLineRef.current = null;
+      lineStyleRef.current = null;
     };
   }, []);
 
@@ -140,6 +151,25 @@ export function ChartPane({ symbol }: Props) {
       cancelled = true;
     };
   }, [symbol, range, interval, reloadKey]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/portfolio", { cache: "no-store" })
+      .then((response) => response.json() as Promise<PortfolioData>)
+      .then((payload) => {
+        if (cancelled) return;
+        const position = payload.positions?.find(
+          (candidate) => candidate.ticker === symbol.toUpperCase(),
+        );
+        setEntry(position?.costBasis ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setEntry(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [symbol]);
 
   useEffect(() => {
     if (!data || !ready || !candleRef.current || !volumeRef.current) return;
@@ -179,8 +209,32 @@ export function ChartPane({ symbol }: Props) {
     return () => window.clearInterval(timer);
   }, [data, ready]);
 
+  useEffect(() => {
+    const series = candleRef.current;
+    if (!series || !ready || entry === null) return;
+    const line = series.createPriceLine({
+      price: entry,
+      color: "#1d6b4f",
+      lineWidth: 1,
+      lineStyle: lineStyleRef.current?.Dashed ?? 2,
+      axisLabelVisible: true,
+      title: "ENTRY",
+    });
+    entryLineRef.current = line;
+    return () => {
+      try {
+        series.removePriceLine(line);
+      } catch {
+        return;
+      }
+      if (entryLineRef.current === line) entryLineRef.current = null;
+    };
+  }, [entry, ready, data]);
+
   const shown = hover ?? (data?.candles[data.candles.length - 1] ?? null);
   const change = data?.changePercent ?? null;
+  const entryReturn =
+    entry !== null && shown?.close ? ((shown.close - entry) / entry) * 100 : null;
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -239,7 +293,16 @@ export function ChartPane({ symbol }: Props) {
             <span className="text-ink">{formatPrice(value as number | null)}</span>
           </span>
         ))}
-        <span className="num ml-auto hidden text-[10px] text-muted sm:inline">
+        {entry !== null ? (
+          <span className="num ml-auto flex items-center gap-1.5 whitespace-nowrap text-[10px]">
+            <span className="label !text-[8px] !text-up">Entry</span>
+            <span className="text-ink">{formatPrice(entry)}</span>
+            <span className={entryReturn === null ? "text-muted" : entryReturn >= 0 ? "text-up" : "text-down"}>
+              {formatPct(entryReturn)}
+            </span>
+          </span>
+        ) : null}
+        <span className={`num hidden text-[10px] text-muted sm:inline ${entry === null ? "ml-auto" : ""}`}>
           VOL {shown ? Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(shown.volume) : "—"}
         </span>
       </div>
