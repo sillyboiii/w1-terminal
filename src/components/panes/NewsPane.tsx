@@ -21,7 +21,7 @@ export function NewsPane() {
 
   useEffect(() => {
     load(query);
-    const timer = setInterval(() => load(query), 120_000);
+    const timer = setInterval(() => load(query), 30_000);
     return () => clearInterval(timer);
   }, [query, load]);
 
@@ -47,7 +47,7 @@ export function NewsPane() {
           />
           <button type="submit" className="label !text-[9px] hover:!text-ink">Go</button>
         </form>
-        <span className="label !text-[8px]">Yahoo</span>
+        <span className="label !text-[8px] !text-ink">Live</span>
       </div>
 
       <div className="pane-scroll min-h-0 flex-1 overflow-y-auto">

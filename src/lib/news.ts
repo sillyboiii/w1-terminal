@@ -2,7 +2,9 @@ import { XMLParser } from "fast-xml-parser";
 import type { NewsItem } from "./types";
 
 const UA = "Mozilla/5.0";
+const CACHE_TTL = 45_000;
 const cache = new Map<string, { value: NewsItem[]; at: number }>();
+const pending = new Map<string, Promise<NewsItem[]>>();
 
 interface YahooNews {
   title: string;
@@ -78,15 +80,32 @@ async function fromGoogleNews(query: string): Promise<NewsItem[] | null> {
   }
 }
 
+function required(promise: Promise<NewsItem[] | null>): Promise<NewsItem[]> {
+  return promise.then((items) => {
+    if (!items?.length) throw new Error("empty feed");
+    return items;
+  });
+}
+
+function refresh(q: string): Promise<NewsItem[]> {
+  const existing = pending.get(q);
+  if (existing) return existing;
+  const task = Promise.any([required(fromYahoo(q)), required(fromGoogleNews(q))])
+    .catch(() => [] as NewsItem[])
+    .then((items) => {
+      if (items.length) cache.set(q, { value: items, at: Date.now() });
+      return items;
+    })
+    .finally(() => pending.delete(q));
+  pending.set(q, task);
+  return task;
+}
+
 export function fetchNews(query: string): Promise<NewsItem[]> {
   const q = query.trim() || "markets";
   const hit = cache.get(q);
-  if (hit && Date.now() - hit.at < 120_000) return Promise.resolve(hit.value);
-  return fromYahoo(q)
-    .then((items) => (items?.length ? items : fromGoogleNews(q)))
-    .then((items) => {
-      const result = items ?? [];
-      if (result.length) cache.set(q, { value: result, at: Date.now() });
-      return result;
-    });
+  if (!hit) return refresh(q);
+  if (Date.now() - hit.at < CACHE_TTL) return Promise.resolve(hit.value);
+  void refresh(q);
+  return Promise.resolve(hit.value);
 }
