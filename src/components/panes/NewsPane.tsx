@@ -94,7 +94,7 @@ export function NewsPane() {
       </div>
 
       <div className="flex h-6 shrink-0 items-center justify-between border-t border-border px-3">
-        <span className="label !text-[8px]">Yahoo Finance / Google News</span>
+        <span className="label !text-[8px]">7 live sources</span>
         <span className="num text-[9px] text-muted">{items.length} stories</span>
       </div>
     </div>
