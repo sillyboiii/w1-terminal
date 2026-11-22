@@ -1,10 +1,12 @@
 import { fetchQuote } from "./yahoo";
 import { yahooSymbol } from "./types";
+import secTickerData from "@/data/sec-tickers.json";
 import type { BalanceSheet, FinancialStatement, FundamentalsData } from "./types";
 
 const HOSTS = ["https://query1.finance.yahoo.com", "https://query2.finance.yahoo.com"];
 const UA = "Mozilla/5.0";
 const SEC_UA = "W1 Terminal research research@w1.investments";
+const SEC_TICKERS = secTickerData as Record<string, number>;
 const CACHE_TTL = 600_000;
 const SEC_CACHE_TTL = 86_400_000;
 
@@ -61,15 +63,8 @@ interface SecCompanyFacts {
   };
 }
 
-interface SecTickerEntry {
-  cik_str: number;
-  ticker: string;
-  title?: string;
-}
-
 const cache = new Map<string, { value: FundamentalsData | null; at: number }>();
 const pending = new Map<string, Promise<FundamentalsData | null>>();
-let secTickers: { value: Record<string, number>; at: number } | null = null;
 const secFactsCache = new Map<string, { value: SecCompanyFacts | null; at: number }>();
 
 async function getJson(url: string, headers: Record<string, string>, timeout = 8000): Promise<Record<string, unknown> | null> {
@@ -145,18 +140,6 @@ function growth(latest: number | null, previous: number | null): number | null {
   return ((latest - previous) / Math.abs(previous)) * 100;
 }
 
-async function loadSecTickers(): Promise<Record<string, number>> {
-  if (secTickers && Date.now() - secTickers.at < SEC_CACHE_TTL) return secTickers.value;
-  const payload = await getJson("https://www.sec.gov/files/company_tickers.json", { "User-Agent": SEC_UA }, 12_000);
-  const entries = Object.values(payload ?? {}) as SecTickerEntry[];
-  const value: Record<string, number> = {};
-  for (const entry of entries) {
-    if (entry.ticker) value[entry.ticker.toUpperCase()] = entry.cik_str;
-  }
-  if (Object.keys(value).length > 0) secTickers = { value, at: Date.now() };
-  return value;
-}
-
 function latestSecFact(facts: SecCompanyFacts | null, tags: string[], namespace: "us-gaap" | "dei" = "us-gaap"): SecFact | null {
   if (!facts) return null;
   const source = namespace === "dei" ? facts.facts?.dei : facts.facts?.["us-gaap"];
@@ -173,8 +156,7 @@ function latestSecFact(facts: SecCompanyFacts | null, tags: string[], namespace:
 }
 
 async function fetchBalanceSheet(symbol: string): Promise<BalanceSheet | null> {
-  const tickers = await loadSecTickers();
-  const cik = tickers[symbol.toUpperCase()];
+  const cik = SEC_TICKERS[symbol.toUpperCase()];
   if (!cik) return null;
   const key = String(cik).padStart(10, "0");
   const cached = secFactsCache.get(key);
