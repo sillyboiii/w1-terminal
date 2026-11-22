@@ -70,8 +70,8 @@ export function NewsPane() {
                 <span className="block text-[12px] leading-snug text-ink group-hover:underline">{item.title}</span>
                 <span className="mt-1 flex items-center gap-2">
                   <span className="label !text-[8px] !tracking-[0.18em]">{item.publisher}</span>
-                  {item.tickers.slice(0, 3).map((ticker) => (
-                    <span key={ticker} className="num text-[9px] text-muted">{ticker}</span>
+                  {item.tickers.slice(0, 3).map((ticker, tickerIndex) => (
+                    <span key={`${ticker}-${tickerIndex}`} className="num text-[9px] text-muted">{ticker}</span>
                   ))}
                 </span>
               </span>

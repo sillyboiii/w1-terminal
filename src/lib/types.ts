@@ -61,6 +61,45 @@ export interface ResearchItem {
   abstract: string | null;
 }
 
+export interface FinancialStatement {
+  date: string;
+  period: string;
+  currency: string | null;
+  revenue: number | null;
+  grossProfit: number | null;
+  operatingIncome: number | null;
+  ebitda: number | null;
+  netIncome: number | null;
+  eps: number | null;
+  freeCashFlow: number | null;
+}
+
+export interface BalanceSheet {
+  date: string;
+  cash: number | null;
+  debt: number | null;
+  assets: number | null;
+  liabilities: number | null;
+  equity: number | null;
+  shares: number | null;
+  source: string;
+}
+
+export interface FundamentalsData {
+  symbol: string;
+  name: string;
+  currency: string;
+  exchange: string;
+  price: number | null;
+  changePercent: number | null;
+  metrics: Record<string, number | null>;
+  annual: FinancialStatement[];
+  quarterly: FinancialStatement[];
+  balanceSheet: BalanceSheet | null;
+  source: string;
+  updatedAt: string;
+}
+
 export interface Position {
   id: string;
   ticker: string;
@@ -98,7 +137,7 @@ export interface PortfolioData {
   updatedAt: string;
 }
 
-export type PaneKind = "chart" | "news" | "watchlist" | "research" | "holdings" | "help";
+export type PaneKind = "chart" | "news" | "watchlist" | "research" | "analyst" | "holdings" | "help";
 
 export interface PaneConfig {
   id: string;

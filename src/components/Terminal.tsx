@@ -6,6 +6,7 @@ import { CommandBar } from "./CommandBar";
 import { Pane } from "./Pane";
 import { StatusBar } from "./StatusBar";
 import { TickerTape } from "./TickerTape";
+import { AnalystPane } from "./panes/AnalystPane";
 import { ChartPane } from "./panes/ChartPane";
 import { HelpPane } from "./panes/HelpPane";
 import { HoldingsPane } from "./panes/HoldingsPane";
@@ -53,6 +54,18 @@ export function Terminal() {
     setActiveId(id);
   }, [panes]);
 
+  const openAnalyst = useCallback((symbol: string) => {
+    const ticker = validSymbol(symbol) ? symbol.toUpperCase() : "AAPL";
+    const id = `analyst-${ticker}`;
+    setPanes((current) => {
+      const existing = current.find((pane) => pane.kind === "analyst");
+      if (!existing) return [...current, { id, kind: "analyst", symbol: ticker }];
+      return current.map((pane) => (pane.kind === "analyst" ? { id, kind: "analyst", symbol: ticker } : pane));
+    });
+    setActiveId(id);
+    setMaximizedId((current) => (current && panes.some((pane) => pane.kind === "analyst") ? id : current));
+  }, [panes]);
+
   const closePane = useCallback((id: string) => {
     setPanes((current) => {
       const next = current.filter((pane) => pane.id !== id);
@@ -87,6 +100,10 @@ export function Terminal() {
       openPane(code === "NEWS" ? "news" : "research");
       return;
     }
+    if (code === "ANALYST" || code === "RES") {
+      openAnalyst(cleaned.split(" ")[1] ?? "AAPL");
+      return;
+    }
     if (code === "WEI") {
       openPane("watchlist");
       return;
@@ -100,7 +117,7 @@ export function Terminal() {
       return;
     }
     if (validSymbol(code)) openChart(code);
-  }, [activeId, openChart, openPane, toggleMaximize]);
+  }, [activeId, openAnalyst, openChart, openPane, toggleMaximize]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -150,6 +167,8 @@ export function Terminal() {
         return <WatchlistPane onSelect={openChart} />;
       case "research":
         return <ResearchPane />;
+      case "analyst":
+        return <AnalystPane symbol={pane.symbol ?? "AAPL"} />;
       case "holdings":
         return <HoldingsPane />;
       case "help":

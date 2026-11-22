@@ -9,6 +9,7 @@ const META: Record<PaneConfig["kind"], { code: string; title: string }> = {
   news: { code: "NEWS", title: "Live News Wire" },
   watchlist: { code: "WEI", title: "Watchlist" },
   research: { code: "WIRE", title: "W1 Research" },
+  analyst: { code: "ANALYST", title: "Analyst Desk" },
   holdings: { code: "HP", title: "Portfolio Holdings" },
   help: { code: "HELP", title: "Command Reference" },
 };

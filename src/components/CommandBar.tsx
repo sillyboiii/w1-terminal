@@ -59,7 +59,7 @@ export function CommandBar({ onCommand }: Props) {
                 inputRef.current?.blur();
               }
             }}
-            placeholder="TYPE A TICKER OR COMMAND  ·  TRY AAPL <GO> OR HELP <GO>"
+            placeholder="TYPE A TICKER OR COMMAND  ·  TRY ANALYST MSFT <GO> OR HELP <GO>"
             className="num h-full w-full bg-transparent text-[13px] uppercase tracking-tight text-ink outline-none placeholder:!text-muted/60 caret-transparent"
             aria-label="Terminal command"
             autoComplete="off"

@@ -39,8 +39,9 @@ export function HelpPane({ onCommand }: Props) {
           <p className="label !text-ink">Data</p>
           <p className="mt-2 text-[10px] leading-relaxed text-muted">
             Charts and quotes from Yahoo Finance with a Spark fallback when OHLC is rate-limited, delayed by up to 15
-            minutes. Headlines from Yahoo Finance with a Google News fallback. The wire reads published W1 research
-            from Sanity.
+            minutes. Company financials combine Yahoo fundamentals with SEC EDGAR balance-sheet data. Headlines come
+            from seven live feeds. The wire reads published W1 research from Sanity, and the analyst desk answers
+            questions from those live figures.
           </p>
         </div>
         <div>
