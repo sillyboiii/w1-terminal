@@ -166,7 +166,7 @@ export function AnalystPane({ symbol }: Props) {
             if (event.key === "Enter") changeSymbol();
           }}
           aria-label="Company ticker"
-          className="num w-24 border border-border bg-transparent px-2 py-1 text-[11px] text-ink outline-none focus:border-ink"
+          className="num h-8 w-28 border border-border bg-transparent px-2 text-[11px] text-ink outline-none focus:border-ink"
           spellCheck={false}
         />
         <button
@@ -348,7 +348,7 @@ export function AnalystPane({ symbol }: Props) {
               }}
               placeholder={`Ask about ${ticker}`}
               aria-label="Analyst question"
-              className="h-8 min-w-0 flex-1 border border-border bg-transparent px-2 text-[11px] text-ink outline-none focus:border-ink"
+              className="h-9 min-w-0 flex-1 border border-border bg-transparent px-2 text-[11px] text-ink outline-none focus:border-ink"
             />
             <button
               type="button"

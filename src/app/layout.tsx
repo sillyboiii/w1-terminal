@@ -1,12 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Cormorant_Garamond, Geist_Mono } from "next/font/google";
+import { Inter, Cormorant_Garamond, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const cormorant = Cormorant_Garamond({
@@ -16,7 +16,7 @@ const cormorant = Cormorant_Garamond({
   weight: ["400", "500", "600"],
 });
 
-const mono = Geist_Mono({
+const mono = IBM_Plex_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
   display: "swap",
@@ -32,13 +32,20 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#fbf6ec",
-  colorScheme: "only light",
+  themeColor: "#f7f2e9",
+  colorScheme: "light dark",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${cormorant.variable} ${mono.variable}`}>
+    <html lang="en" className={`${inter.variable} ${cormorant.variable} ${mono.variable}`} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: 'try{if(localStorage.getItem("w1-terminal-theme")==="dark")document.documentElement.classList.add("dark")}catch(e){}',
+          }}
+        />
+      </head>
       <body>{children}</body>
     </html>
   );

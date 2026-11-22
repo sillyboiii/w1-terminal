@@ -20,10 +20,10 @@ export function TickerTape() {
     return () => clearInterval(timer);
   }, []);
 
-  if (quotes.length === 0) return <div className="h-9 shrink-0 border-t border-border bg-background/80" />;
+  if (quotes.length === 0) return <div className="h-10 shrink-0 border-t border-border bg-background/80" />;
 
   return (
-    <div className="relative z-10 flex h-9 shrink-0 items-center overflow-hidden border-t border-border bg-background/85">
+    <div className="relative z-10 flex h-10 shrink-0 items-center overflow-hidden border-t border-border bg-background/85">
       <div className="label z-10 flex h-full shrink-0 items-center border-r border-border bg-background px-3 !text-ink">
         Tape
       </div>

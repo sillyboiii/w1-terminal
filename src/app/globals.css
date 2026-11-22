@@ -1,15 +1,27 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fbf6ec;
-  --foreground: #151515;
-  --muted: #6b6b6b;
-  --border: #e8dfd2;
-  --ink: #0f0f0f;
-  --paper: #fbf6ec;
-  --up: #1d6b4f;
-  --down: #9b3535;
-  color-scheme: only light;
+  --background: #f7f2e9;
+  --foreground: #1c1a17;
+  --muted: #645e55;
+  --border: #ded5c8;
+  --ink: #171614;
+  --paper: #f7f2e9;
+  --up: #236b52;
+  --down: #9c4a42;
+  color-scheme: light;
+}
+
+:root.dark {
+  --background: #141312;
+  --foreground: #eee8dd;
+  --muted: #aaa298;
+  --border: #393530;
+  --ink: #f4efe6;
+  --paper: #1a1917;
+  --up: #74c9a3;
+  --down: #e18c7f;
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -39,6 +51,10 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+  text-rendering: optimizeLegibility;
+  font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -46,15 +62,31 @@ body {
   font-family: var(--font-mono), ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
-  letter-spacing: -0.035em;
+  letter-spacing: 0;
 }
 
 .label {
-  font-size: 9px;
-  line-height: 1;
-  letter-spacing: 0.24em;
+  font-size: 10px;
+  line-height: 1.2;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+[class*="text-[8px]"] {
+  font-size: 10px !important;
+}
+[class*="text-[9px]"] {
+  font-size: 11px !important;
+}
+[class*="text-[10px]"] {
+  font-size: 12px !important;
+}
+[class*="text-[11px]"] {
+  font-size: 13px !important;
+}
+[class*="text-[13px]"] {
+  font-size: 14px !important;
 }
 
 .serif {
@@ -66,8 +98,8 @@ body {
   scrollbar-color: var(--border) transparent;
 }
 .pane-scroll::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 .pane-scroll::-webkit-scrollbar-thumb {
   background: var(--border);
@@ -78,9 +110,9 @@ body {
 
 .terminal-grid {
   display: grid;
-  gap: 0.5rem;
+  gap: 0.75rem;
   grid-template-columns: minmax(0, 1fr);
-  grid-auto-rows: minmax(220px, 1fr);
+  grid-auto-rows: minmax(240px, 1fr);
 }
 @media (min-width: 768px) {
   .terminal-grid {
@@ -94,87 +126,43 @@ body {
   }
 }
 
-.grid-backdrop {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(to right, rgba(15, 15, 15, 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(15, 15, 15, 0.035) 1px, transparent 1px);
-  background-size: 48px 48px;
-  animation: grid-drift 60s linear infinite;
-}
-
-.scanline {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.35;
-  background: repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent 3px,
-    rgba(15, 15, 15, 0.028) 3px,
-    rgba(15, 15, 15, 0.028) 4px
-  );
-}
-.scanline::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 22vh;
-  background: linear-gradient(to bottom, transparent, rgba(15, 15, 15, 0.025), transparent);
-  animation: scan-sweep 14s linear infinite;
-}
-
 .cursor-blink {
   animation: cursor-blink 1.05s steps(1) infinite;
 }
 
 .pulse-dot {
-  animation: pulse-dot 2.2s ease-in-out infinite;
+  animation: pulse-dot 2.4s ease-in-out infinite;
 }
 
 .ticker-scroll {
-  animation: ticker-scroll 100s linear infinite;
+  animation: ticker-scroll 140s linear infinite;
 }
 .ticker-scroll:hover {
   animation-play-state: paused;
 }
 
 .wire-enter {
-  animation: wire-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: wire-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-@keyframes grid-drift {
-  from { background-position: 0 0; }
-  to { background-position: 48px 48px; }
-}
-@keyframes scan-sweep {
-  from { transform: translateY(-30vh); }
-  to { transform: translateY(130vh); }
-}
 @keyframes cursor-blink {
   0%, 49% { opacity: 1; }
   50%, 100% { opacity: 0; }
 }
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.35; transform: scale(0.8); }
+  50% { opacity: 0.45; transform: scale(0.9); }
 }
 @keyframes ticker-scroll {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
 @keyframes wire-in {
-  from { opacity: 0; transform: translateY(-10px); }
+  from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .grid-backdrop,
-  .scanline::after,
   .cursor-blink,
   .pulse-dot,
   .ticker-scroll,

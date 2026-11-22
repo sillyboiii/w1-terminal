@@ -63,8 +63,8 @@ export function Terminal() {
       return current.map((pane) => (pane.kind === "analyst" ? { id, kind: "analyst", symbol: ticker } : pane));
     });
     setActiveId(id);
-    setMaximizedId((current) => (current && panes.some((pane) => pane.kind === "analyst") ? id : current));
-  }, [panes]);
+    setMaximizedId(id);
+  }, []);
 
   const closePane = useCallback((id: string) => {
     setPanes((current) => {
@@ -178,11 +178,9 @@ export function Terminal() {
 
   return (
     <main className="relative flex h-dvh min-h-0 flex-col overflow-hidden bg-background text-foreground">
-      <div className="grid-backdrop" />
-      <div className="scanline" />
       <StatusBar />
 
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col p-1.5 md:p-2">
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col p-2 md:p-3">
         <AnimatePresence initial={false} mode="popLayout">
           <motion.div
             layout

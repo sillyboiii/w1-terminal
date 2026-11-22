@@ -39,15 +39,15 @@ export function Pane({ config, maximized, active = false, onActivate, onMaximize
       style={style}
       data-pane
       onMouseDown={() => onActivate?.()}
-      className={`relative flex min-h-0 min-w-0 flex-col overflow-hidden border bg-background/80 backdrop-blur-sm transition-colors ${
+      className={`relative flex min-h-0 min-w-0 flex-col overflow-hidden border bg-background transition-colors ${
         active ? "border-ink/40" : "border-border"
       }`}
     >
-      <div className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-border px-2.5">
+      <div className="flex h-10 shrink-0 items-center justify-between gap-2 border-b border-border px-3">
         <div className="flex min-w-0 items-baseline gap-2">
-          <span className="num text-xs text-border">/</span>
-          <span className="num shrink-0 text-[11px] font-semibold tracking-tight text-ink">{code}</span>
-          <span className="truncate font-serif text-[13px] italic text-foreground/80">{meta.title}</span>
+          <span className="num text-sm text-muted">/</span>
+          <span className="num shrink-0 font-semibold text-ink">{code}</span>
+          <span className="truncate font-serif text-base italic text-foreground/80">{meta.title}</span>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           {config.kind === "chart" && config.symbol ? (
@@ -56,7 +56,7 @@ export function Pane({ config, maximized, active = false, onActivate, onMaximize
           <button
             type="button"
             onClick={() => onMaximize(config.id)}
-            className="num flex h-5 w-5 items-center justify-center text-[10px] text-muted transition-colors hover:bg-border/40 hover:text-ink"
+            className="num flex h-7 w-7 items-center justify-center text-xs text-muted transition-colors hover:bg-border/40 hover:text-ink"
             title={maximized ? "Restore pane" : "Maximise pane"}
             aria-label={maximized ? "Restore pane" : "Maximise pane"}
           >
@@ -65,7 +65,7 @@ export function Pane({ config, maximized, active = false, onActivate, onMaximize
           <button
             type="button"
             onClick={() => onClose(config.id)}
-            className="num flex h-5 w-5 items-center justify-center text-[11px] text-muted transition-colors hover:bg-border/40 hover:text-ink"
+            className="num flex h-7 w-7 items-center justify-center text-sm text-muted transition-colors hover:bg-border/40 hover:text-ink"
             title="Close pane"
             aria-label="Close pane"
           >

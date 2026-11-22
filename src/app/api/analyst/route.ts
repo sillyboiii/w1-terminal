@@ -104,25 +104,66 @@ function fallbackAnswer(
   fundamentals: Awaited<ReturnType<typeof fetchFundamentals>>,
   quote: Awaited<ReturnType<typeof fetchQuote>>,
   news: Awaited<ReturnType<typeof fetchNews>>,
+  question: string,
 ): string {
   if (!fundamentals) {
     return `- No financial data is available for ${symbol} from Yahoo Finance right now.\n- Watch: retry after the market data provider refreshes.`;
   }
+
+  const q = question.toLowerCase();
   const m = fundamentals.metrics;
   const latest = fundamentals.annual[0];
   const latestQuarter = fundamentals.quarterly[0];
-  const lines = [
-    `- ${fundamentals.name} (${symbol}) last annual revenue was ${money(m.revenue)} (${pct(m.revenueGrowth)} YoY, ${formatShortDate(latest?.date ?? null)}).`,
-    `- Profitability: gross margin ${pct(m.grossMargin)}, operating margin ${pct(m.operatingMargin)}, net margin ${pct(m.netMargin)}, free-cash-flow margin ${pct(m.freeCashFlowMargin)}.`,
-    `- Cash generation: net income ${money(m.netIncome)}, diluted EPS ${num(m.dilutedEps)}, free cash flow ${money(m.freeCashFlow)}.`,
-    `- Latest quarter (${formatShortDate(latestQuarter?.date ?? null)}): revenue ${money(latestQuarter?.revenue ?? null)}, net income ${money(latestQuarter?.netIncome ?? null)}, EPS ${num(latestQuarter?.eps ?? null)}.`,
-    `- Valuation: price ${num(quote?.price ?? fundamentals.price)} with indicated P/E ${num(m.priceToEarnings)} and estimated market cap ${money(m.marketCap)}.`,
-    `- Balance sheet: cash ${money(m.cash)}, debt ${money(m.debt)}, liabilities ${money(m.liabilities)}, equity ${money(m.equity)}.`,
-    `- Tape: ${pct(quote?.changePercent ?? fundamentals.changePercent)} today; ${news[0]?.title ?? "no fresh headline available"}.`,
-    `- Watch: revenue growth and free cash flow conversion are the cleanest checks on the current narrative.`,
-    `- Data: ${fundamentals.source}. Rule-based brief — the AI model is unavailable on this deployment.`,
-  ];
-  return lines.join("\n");
+  const has = (...terms: string[]) => terms.some((term) => q.includes(term));
+  const lines: string[] = [];
+  const contextLines: string[] = [];
+  const add = (line: string) => {
+    if (!lines.includes(line)) lines.push(line);
+  };
+  const addContext = (line: string) => {
+    add(line);
+    contextLines.push(line);
+  };
+
+  if (has("should i", "buy", "sell", "recommend", "advice", "price target", "target price")) {
+    add(`- I cannot give personalised advice or a price target. The data below is the decision-relevant context I can verify.`);
+  }
+  if (has("guidance", "forecast", "management", "moat", "competitor", "peer", "dividend")) {
+    add(`- Guidance, peer comparisons, dividend policy and management claims are not loaded in this pane, so I will not invent them.`);
+  }
+  if (has("why", "down", "up", "tape", "news", "headline", "catalyst", "sentiment", "stock move")) {
+    addContext(`- Tape: ${pct(quote?.changePercent ?? fundamentals.changePercent)} today. Latest wire headline: ${news[0]?.title?.slice(0, 150) ?? "no fresh headline available"}.`);
+    add(`- The data does not prove a cause for the move; treat the headline as context, not attribution.`);
+  }
+  if (has("balance sheet", "debt", "liabilit", "equity", "solvency", "leverage", "cash position")) {
+    addContext(`- Balance sheet (${formatShortDate(fundamentals.balanceSheet?.date ?? null)}): cash ${money(m.cash)}, debt ${money(m.debt)}, liabilities ${money(m.liabilities)}, equity ${money(m.equity)}.`);
+  }
+  if (has("cash flow", "fcf", "free cash", "cash generation", "conversion")) {
+    addContext(`- Cash generation: net income ${money(m.netIncome)}, free cash flow ${money(m.freeCashFlow)}, FCF margin ${pct(m.freeCashFlowMargin)}.`);
+  }
+  if (has("margin", "profit", "gross", "operating", "ebitda", "net income", "earnings", "eps")) {
+    addContext(`- Profitability: gross margin ${pct(m.grossMargin)}, operating margin ${pct(m.operatingMargin)}, EBITDA margin ${pct(m.ebitdaMargin)}, net margin ${pct(m.netMargin)}, diluted EPS ${num(m.dilutedEps)}.`);
+  }
+  if (has("revenue", "sales", "top line", "growth", "growing", "grew")) {
+    addContext(`- Revenue: ${money(m.revenue)} in the latest annual period (${pct(m.revenueGrowth)} YoY, ${formatShortDate(latest?.date ?? null)}).`);
+  }
+  if (has("quarter", "latest results", "recent results", "q1", "q2", "q3", "q4")) {
+    addContext(`- Latest quarter (${formatShortDate(latestQuarter?.date ?? null)}): revenue ${money(latestQuarter?.revenue ?? null)}, net income ${money(latestQuarter?.netIncome ?? null)}, EPS ${num(latestQuarter?.eps ?? null)}, FCF ${money(latestQuarter?.freeCashFlow ?? null)}.`);
+  }
+  if (has("valuation", "p/e", "pe ratio", "expensive", "cheap", "market cap", "price", "worth")) {
+    addContext(`- Valuation: price ${num(quote?.price ?? fundamentals.price)}, indicated P/E ${num(m.priceToEarnings)}, estimated market cap ${money(m.marketCap)}.`);
+  }
+  if (has("risk", "watch", "concern", "problem", "bear", "thesis")) {
+    addContext(`- Watch: revenue growth and free cash flow conversion are the cleanest checks on the current narrative.`);
+  }
+
+  if (contextLines.length === 0) {
+    add(`- I cannot answer that from the loaded data alone; no verified qualitative source is available for "${question.slice(0, 120)}".`);
+    add(`- What I can verify: revenue ${money(m.revenue)} (${pct(m.revenueGrowth)} YoY), net margin ${pct(m.netMargin)}, free cash flow ${money(m.freeCashFlow)}, P/E ${num(m.priceToEarnings)}.`);
+  }
+
+  add(`- Data: ${fundamentals.source}. Rule-based answer — the AI model is unavailable on this deployment.`);
+  return lines.slice(0, 8).join("\n");
 }
 
 export async function POST(request: Request) {
@@ -180,7 +221,7 @@ export async function POST(request: Request) {
   const sources = fundamentals?.source ?? "Yahoo Finance";
   if (!text) {
     return NextResponse.json({
-      text: fallbackAnswer(symbol, fundamentals, quote, news),
+      text: fallbackAnswer(symbol, fundamentals, quote, news, question),
       mode: "fallback",
       symbol,
       sources,

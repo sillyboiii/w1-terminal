@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { ThemeToggle } from "./ThemeToggle";
 import { FUNCTION_KEYS } from "@/lib/commands";
 
 interface Props {
@@ -25,7 +26,7 @@ export function CommandBar({ onCommand }: Props) {
 
   return (
     <div className="relative z-20 shrink-0">
-      <div className="flex h-12 items-center gap-2 border-t border-border bg-background px-3 md:px-4">
+      <div className="flex h-14 items-center gap-2 border-t border-border bg-background px-3 md:px-4">
         <span className="num text-lg leading-none text-ink">&gt;</span>
         <div className="relative flex h-full flex-1 items-center">
           <input
@@ -60,7 +61,7 @@ export function CommandBar({ onCommand }: Props) {
               }
             }}
             placeholder="TYPE A TICKER OR COMMAND  ·  TRY ANALYST MSFT <GO> OR HELP <GO>"
-            className="num h-full w-full bg-transparent text-[13px] uppercase tracking-tight text-ink outline-none placeholder:!text-muted/60 caret-transparent"
+            className="num h-full w-full bg-transparent text-sm uppercase text-ink outline-none placeholder:!text-muted/60 caret-transparent"
             aria-label="Terminal command"
             autoComplete="off"
             spellCheck={false}
@@ -80,8 +81,9 @@ export function CommandBar({ onCommand }: Props) {
         >
           Go ↵
         </button>
+        <ThemeToggle />
       </div>
-      <div className="pane-scroll flex h-8 items-center gap-1 overflow-x-auto border-t border-border bg-background px-3 md:px-4">
+      <div className="pane-scroll flex h-9 items-center gap-1 overflow-x-auto border-t border-border bg-background px-3 md:px-4">
         {Object.entries(FUNCTION_KEYS).map(([key, command]) => (
           <button
             key={key}
@@ -93,7 +95,7 @@ export function CommandBar({ onCommand }: Props) {
             <span className="label !text-[9px] group-hover:!text-ink">{command.split(" ")[0]}</span>
           </button>
         ))}
-        <span className="ml-auto hidden shrink-0 label !text-[9px] md:block">Press / to focus</span>
+        <span className="ml-auto hidden shrink-0 label md:block">Press / to focus</span>
       </div>
     </div>
   );
