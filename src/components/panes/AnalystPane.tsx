@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { formatShortDate } from "@/lib/format";
-import type { FundamentalsData, NewsItem } from "@/lib/types";
+import type { BalanceSheet, FinancialStatement, FundamentalsData, NewsItem } from "@/lib/types";
 
 interface Props {
   symbol: string;
@@ -24,6 +24,116 @@ const SUGGESTIONS = [
   "What does the balance sheet say?",
   "How does recent news affect the thesis?",
 ];
+
+const METRIC_LABELS: Record<string, string> = {
+  revenue: "Revenue",
+  revenueGrowth: "Revenue growth %",
+  grossProfit: "Gross profit",
+  grossMargin: "Gross margin %",
+  operatingIncome: "Operating income",
+  operatingMargin: "Operating margin %",
+  ebitda: "EBITDA",
+  ebitdaMargin: "EBITDA margin %",
+  netIncome: "Net income",
+  netMargin: "Net margin %",
+  netIncomeGrowth: "Net income growth %",
+  dilutedEps: "Diluted EPS",
+  freeCashFlow: "Free cash flow",
+  freeCashFlowMargin: "FCF margin %",
+  priceToEarnings: "P/E",
+  marketCap: "Estimated market cap",
+  enterpriseValue: "Enterprise value",
+  cash: "Cash",
+  debt: "Debt",
+  assets: "Assets",
+  liabilities: "Liabilities",
+  equity: "Equity",
+};
+
+function csvCell(value: string | number | null | undefined): string {
+  if (value === null || value === undefined) return "";
+  const text = String(value);
+  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+function csvRow(values: Array<string | number | null | undefined>): string {
+  return values.map(csvCell).join(",");
+}
+
+function csvMetric(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return csvCell(null);
+  return csvCell(Number(value.toFixed(4)));
+}
+
+function statementRows(statement: FinancialStatement): string[] {
+  return [
+    csvRow([
+      statement.date,
+      statement.period,
+      statement.currency,
+      statement.revenue,
+      statement.grossProfit,
+      statement.operatingIncome,
+      statement.ebitda,
+      statement.netIncome,
+      statement.eps,
+      statement.freeCashFlow,
+    ]),
+  ];
+}
+
+function balanceSheetRow(sheet: BalanceSheet): string {
+  return csvRow([sheet.date, sheet.cash, sheet.debt, sheet.assets, sheet.liabilities, sheet.equity, sheet.shares, sheet.source]);
+}
+
+function buildFinancialsCsv(data: FundamentalsData): string {
+  const lines: string[] = [
+    csvRow(["W1 Investments financial export"]),
+    csvRow(["Symbol", data.symbol]),
+    csvRow(["Company", data.name]),
+    csvRow(["Exchange", data.exchange]),
+    csvRow(["Currency", data.currency]),
+    csvRow(["Price", data.price]),
+    csvRow(["Change %", data.changePercent]),
+    csvRow(["Source", data.source]),
+    csvRow(["Updated", data.updatedAt]),
+    "",
+    csvRow(["Key metrics"]),
+    csvRow(["Metric", "Value"]),
+    ...Object.entries(data.metrics).map(([key, value]) => csvRow([METRIC_LABELS[key] ?? key, csvMetric(value)])),
+    "",
+    csvRow(["Annual statements"]),
+    csvRow(["Date", "Period", "Currency", "Revenue", "Gross profit", "Operating income", "EBITDA", "Net income", "Diluted EPS", "Free cash flow"]),
+    ...data.annual.flatMap(statementRows),
+    "",
+    csvRow(["Quarterly statements"]),
+    csvRow(["Date", "Period", "Currency", "Revenue", "Gross profit", "Operating income", "EBITDA", "Net income", "Diluted EPS", "Free cash flow"]),
+    ...data.quarterly.flatMap(statementRows),
+  ];
+
+  if (data.balanceSheet) {
+    lines.push(
+      "",
+      csvRow(["Balance sheet"]),
+      csvRow(["Date", "Cash", "Debt", "Assets", "Liabilities", "Equity", "Shares", "Source"]),
+      balanceSheetRow(data.balanceSheet),
+    );
+  }
+
+  return `\uFEFF${lines.join("\r\n")}\r\n`;
+}
+
+function downloadFinancials(data: FundamentalsData): void {
+  const blob = new Blob([buildFinancialsCsv(data)], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `${data.symbol}-financials-${data.updatedAt.slice(0, 10)}.csv`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
 
 function money(value: number | null): string {
   if (value === null || !Number.isFinite(value)) return "—";
@@ -226,19 +336,30 @@ export function AnalystPane({ symbol }: Props) {
                 <Metric label="Equity" value={money(data.metrics.equity)} />
               </div>
 
-              <div className="flex items-center justify-between border-b border-border px-3 py-2">
-                <span className="label !text-ink">Financial statements</span>
-                <div className="flex items-center border border-border p-0.5">
-                  {(["annual", "quarterly"] as Period[]).map((item) => (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => setPeriod(item)}
-                      className={`num px-2 py-0.5 text-[9px] capitalize transition-colors ${period === item ? "bg-ink text-background" : "text-muted hover:text-ink"}`}
-                    >
-                      {item}
-                    </button>
-                  ))}
+              <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
+                <span className="label truncate !text-ink">Financial statements</span>
+                <div className="flex shrink-0 items-center gap-2">
+                  <div className="flex items-center border border-border p-0.5">
+                    {(["annual", "quarterly"] as Period[]).map((item) => (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => setPeriod(item)}
+                        className={`num px-2 py-0.5 text-[9px] capitalize transition-colors ${period === item ? "bg-ink text-background" : "text-muted hover:text-ink"}`}
+                      >
+                        {item}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => downloadFinancials(data)}
+                    className="label border border-border px-2 py-1 !text-ink transition-colors hover:border-ink"
+                    aria-label={`Download ${ticker} financials as CSV`}
+                    title={`Download ${ticker} financials as CSV`}
+                  >
+                    CSV
+                  </button>
                 </div>
               </div>
 
