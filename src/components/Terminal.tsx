@@ -19,7 +19,6 @@ import { validSymbol, type PaneConfig, type PaneKind } from "@/lib/types";
 const DEFAULT_PANES: PaneConfig[] = [
   { id: "chart-AAPL", kind: "chart", symbol: "AAPL" },
   { id: "news", kind: "news" },
-  { id: "watchlist", kind: "watchlist" },
 ];
 
 type GridVars = React.CSSProperties & { "--col"?: string; "--row"?: string };
