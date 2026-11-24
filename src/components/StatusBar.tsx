@@ -16,9 +16,9 @@ export function StatusBar() {
   const now = tick === "server" ? null : new Date(Number(tick) * 1000);
 
   return (
-    <header className="relative z-20 flex h-12 shrink-0 items-center justify-between gap-4 border-b border-border bg-background/90 px-3 backdrop-blur-md md:px-4">
-      <div className="flex min-w-0 items-center gap-3">
-        <Image src="/w1-logo.png" alt="W1 Investments" width={28} height={28} className="h-7 w-7 object-contain" />
+    <header className="relative z-20 flex h-11 shrink-0 items-center justify-between gap-3 border-b border-border bg-background/90 px-3 backdrop-blur-md md:px-4">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <Image src="/w1-logo.png" alt="W1 Investments" width={24} height={24} className="h-6 w-6 object-contain" />
         <div className="flex items-baseline gap-2">
           <span className="serif text-xl leading-none tracking-tight text-ink">W1</span>
           <span className="text-xs text-border">/</span>

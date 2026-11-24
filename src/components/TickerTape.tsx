@@ -20,10 +20,10 @@ export function TickerTape() {
     return () => clearInterval(timer);
   }, []);
 
-  if (quotes.length === 0) return <div className="h-10 shrink-0 border-t border-border bg-background/80" />;
+  if (quotes.length === 0) return <div className="h-9 shrink-0 border-t border-border bg-background/80" />;
 
   return (
-    <div className="relative z-10 flex h-10 shrink-0 items-center overflow-hidden border-t border-border bg-background/85">
+    <div className="relative z-10 flex h-9 shrink-0 items-center overflow-hidden border-t border-border bg-background/85">
       <div className="label z-10 flex h-full shrink-0 items-center border-r border-border bg-background px-3 !text-ink">
         Tape
       </div>
@@ -33,7 +33,7 @@ export function TickerTape() {
             const change = quote.changePercent;
             const tone = change === null ? "text-muted" : change >= 0 ? "text-up" : "text-down";
             return (
-              <div key={`${quote.symbol}-${index}`} className="flex shrink-0 items-center gap-2 px-4 text-[11px]">
+              <div key={`${quote.symbol}-${index}`} className="flex shrink-0 items-center gap-2 px-3 text-[11px]">
                 <span className="num font-medium text-ink">{quote.symbol}</span>
                 <span className="hidden text-muted lg:inline">{quote.name}</span>
                 <AnimatedNumber value={quote.price} format={(v) => formatPrice(v)} className="text-[11px] text-ink" />

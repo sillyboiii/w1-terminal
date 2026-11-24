@@ -180,7 +180,7 @@ export function Terminal() {
     <main className="relative flex h-dvh min-h-0 flex-col overflow-hidden bg-background text-foreground">
       <StatusBar />
 
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col p-2 md:p-3">
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col p-1.5 md:p-2.5">
         <AnimatePresence initial={false} mode="popLayout">
           <motion.div
             layout

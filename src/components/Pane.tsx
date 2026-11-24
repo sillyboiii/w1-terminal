@@ -43,7 +43,7 @@ export function Pane({ config, maximized, active = false, onActivate, onMaximize
         active ? "border-ink/40" : "border-border"
       }`}
     >
-      <div className="flex h-10 shrink-0 items-center justify-between gap-2 border-b border-border px-3">
+      <div className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-border px-3">
         <div className="flex min-w-0 items-baseline gap-2">
           <span className="num text-sm text-muted">/</span>
           <span className="num shrink-0 font-semibold text-ink">{code}</span>
@@ -56,7 +56,7 @@ export function Pane({ config, maximized, active = false, onActivate, onMaximize
           <button
             type="button"
             onClick={() => onMaximize(config.id)}
-            className="num flex h-7 w-7 items-center justify-center text-xs text-muted transition-colors hover:bg-border/40 hover:text-ink"
+            className="num flex h-6 w-6 items-center justify-center text-xs text-muted transition-colors hover:bg-border/40 hover:text-ink"
             title={maximized ? "Restore pane" : "Maximise pane"}
             aria-label={maximized ? "Restore pane" : "Maximise pane"}
           >

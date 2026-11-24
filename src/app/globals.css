@@ -51,8 +51,8 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
-  font-size: 14px;
-  line-height: 1.45;
+  font-size: 13px;
+  line-height: 1.4;
   text-rendering: optimizeLegibility;
   font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
@@ -66,7 +66,7 @@ body {
 }
 
 .label {
-  font-size: 10px;
+  font-size: 9px;
   line-height: 1.2;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -74,19 +74,43 @@ body {
 }
 
 [class*="text-[8px]"] {
-  font-size: 10px !important;
+  font-size: 9px !important;
 }
 [class*="text-[9px]"] {
-  font-size: 11px !important;
+  font-size: 10px !important;
 }
 [class*="text-[10px]"] {
-  font-size: 12px !important;
+  font-size: 11px !important;
 }
 [class*="text-[11px]"] {
-  font-size: 13px !important;
+  font-size: 12px !important;
+}
+[class*="text-[12px]"] {
+  font-size: 12px !important;
 }
 [class*="text-[13px]"] {
+  font-size: 13px !important;
+}
+[class*="text-[14px]"] {
+  font-size: 13px !important;
+}
+[class*="text-[15px]"] {
   font-size: 14px !important;
+}
+.text-xs {
+  font-size: 11px !important;
+}
+.text-sm {
+  font-size: 13px !important;
+}
+.text-base {
+  font-size: 14px !important;
+}
+.text-lg {
+  font-size: 16px !important;
+}
+.text-xl {
+  font-size: 18px !important;
 }
 
 .serif {
@@ -110,9 +134,9 @@ body {
 
 .terminal-grid {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.5rem;
   grid-template-columns: minmax(0, 1fr);
-  grid-auto-rows: minmax(240px, 1fr);
+  grid-auto-rows: minmax(220px, 1fr);
 }
 @media (min-width: 768px) {
   .terminal-grid {

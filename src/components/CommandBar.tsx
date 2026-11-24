@@ -26,8 +26,8 @@ export function CommandBar({ onCommand }: Props) {
 
   return (
     <div className="relative z-20 shrink-0">
-      <div className="flex h-14 items-center gap-2 border-t border-border bg-background px-3 md:px-4">
-        <span className="num text-lg leading-none text-ink">&gt;</span>
+      <div className="flex h-12 items-center gap-2 border-t border-border bg-background px-3 md:px-4">
+        <span className="num text-base leading-none text-ink">&gt;</span>
         <div className="relative flex h-full flex-1 items-center">
           <input
             ref={inputRef}
@@ -77,13 +77,13 @@ export function CommandBar({ onCommand }: Props) {
         <button
           type="button"
           onClick={submit}
-          className="label shrink-0 border border-border px-3 py-2 !text-ink transition-colors hover:border-ink"
+            className="label shrink-0 border border-border px-2.5 py-1.5 !text-ink transition-colors hover:border-ink"
         >
           Go ↵
         </button>
         <ThemeToggle />
       </div>
-      <div className="pane-scroll flex h-9 items-center gap-1 overflow-x-auto border-t border-border bg-background px-3 md:px-4">
+      <div className="pane-scroll flex h-8 items-center gap-1 overflow-x-auto border-t border-border bg-background px-3 md:px-4">
         {Object.entries(FUNCTION_KEYS).map(([key, command]) => (
           <button
             key={key}
